@@ -1,3 +1,4 @@
+import * as fs from "node:fs";
 import * as cheerio from "cheerio";
 import { fetch } from "./fetch";
 
@@ -26,6 +27,8 @@ export const getCards = async () => {
 
 				const html = await fetch(uri).then((res) => res.text());
 
+				// fs.writeFileSync(__dirname + "/page-" + "" + ".html", html);
+
 				console.log(cardIds.length, i);
 
 				const $ = cheerio.load(html);
@@ -38,6 +41,13 @@ export const getCards = async () => {
 				const numeroLiteral = $(".LeftBox .card h4")
 					.text()
 					.match(/No.(\d+)/)?.[1];
+
+				const edition = $(".LeftBox .img-regulation").attr("alt");
+
+				const dimension = $(".LeftBox .card").first().find("p").first().text();
+				const description = $(
+					$(".LeftBox .card").first().find("p").get(1),
+				).text();
 
 				const attacks = $(".RightBox h4")
 					.map((_, el) => {
@@ -52,13 +62,21 @@ export const getCards = async () => {
 							.map((_, el) => getElementFromIconClassName($(el).attr("class")))
 							.toArray();
 
-						return { name, damage, effect, cost };
+						return {
+							name: name || undefined,
+							damage: damage || undefined,
+							effect: effect || undefined,
+							cost,
+						};
 					})
 					.toArray();
 
 				return {
 					cardId,
 					name,
+					edition,
+					dimension: dimension || undefined,
+					description: description || undefined,
 					element,
 					health: +health,
 					numero: numeroLiteral ? parseInt(numeroLiteral) : undefined,
